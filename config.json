@@ -1,0 +1,37 @@
+{
+    "rootfiles_path" : "/mnt/analysis/e17028/correlated_rootfiles/",
+    "isotope" : "ti57",
+    "isotope_daughter" : "v57",
+    "use_daughter" : false,
+    "middle_segments_only" : true,
+    "tas_bin_width": 50,
+    "tas_lower_limit": 1,
+    "tas_upper_limit": 10001,
+    "ss_bin_width": 50,
+    "ss_lower_limit": 1,
+    "ss_upper_limit": 10001,
+
+
+    "cut_on_time": true,
+    "time_start": 0,
+    "time_end": 300000000,
+    "daughter_time_start": 600000000,
+    "daughter_time_end": 1200000000,
+    "cut_on_veto": true,
+    "veto_start": -1,
+    "veto_end": 25,
+    "cut_on_tas": false,
+    "tas_start": 0,
+    "tas_end": 10001,
+    "cut_on_ss": false,
+    "ss_start": 0,
+    "ss_end": 10001,
+    "not_single": false,
+    "cut_on_mult": false,
+    "mult_start": 0,
+    "mult_end": 100,
+
+
+    "scale_factor": 0.95,
+    "cscale_factor": 0.63
+}
