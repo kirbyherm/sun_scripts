@@ -7,7 +7,6 @@
 #include "TCanvas.h"
 #include "TImage.h"
 #include "TH1F.h"
-#include "TH2F.h"
 #include "TSystem.h"
 #include <string>
 #include <sstream>
@@ -34,7 +33,6 @@ public:
         LoadParams(filename);
     }
     std::string Get_Cuts(bool, int) const;
-    std::string Get_Rootfiles_Path() const;
     std::string Get_Isotope() const;
     std::string Get_Isotope_Daughter() const;
     bool Use_Daughter() const;
@@ -47,7 +45,6 @@ public:
 
 private:
 
-    std::string rootfiles_path;
     std::string isotope;
     std::string isotope_daughter;
     bool use_daughter;
@@ -86,7 +83,6 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     namespace pt = boost::property_tree;
     pt::ptree loadPtreeRoot;
     pt::read_json(filename.c_str(),loadPtreeRoot);
-    rootfiles_path = readJSON<std::string>(loadPtreeRoot,"rootfiles_path"); 
     isotope = readJSON<std::string>(loadPtreeRoot,"isotope"); 
     isotope_daughter = readJSON<std::string>(loadPtreeRoot,"isotope_daughter"); 
     use_daughter = readJSON<bool>(loadPtreeRoot,"use_daughter"); 
@@ -118,10 +114,6 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     mult_end = readJSON<int>(loadPtreeRoot,"mult_end");
     
     scale_factor = readJSON<double>(loadPtreeRoot,"scale_factor");
-}
-
-std::string ConfigParams::Get_Rootfiles_Path() const{
-    return rootfiles_path;
 }
 
 std::string ConfigParams::Get_Isotope() const{
@@ -184,7 +176,7 @@ std::string ConfigParams::Get_Cuts(bool isDaughter=false, int seg=-1) const{
                 continue;
             if (seg_cut.size() > 1 && i_seg < 8)
                 seg_cut += "&&";
-            seg_cut += Form("(SuN_Seg_high_gain_cal[%d]<%d||SuN_Seg_high_gain_cal[%d]>%d)",i_seg,ss_start,i_seg,ss_end);
+            seg_cut += Form("(SuN_Seg_high_gain_cal[%d]<%d||SuN_Seg_high_gain_cal[%d]>%d)",i_seg,i_seg,ss_start,ss_end);
             }
         } else {
             for (int i_seg=0; i_seg<8; i_seg++){
@@ -194,7 +186,7 @@ std::string ConfigParams::Get_Cuts(bool isDaughter=false, int seg=-1) const{
                     continue;
                 if (seg_cut.size() > 1 && i_seg < 8)
                     seg_cut += "||";
-                seg_cut += Form("(SuN_Seg_high_gain_cal[%d]>%d&&SuN_Seg_high_gain_cal[%d]<%d)",i_seg,ss_start,i_seg,ss_end);
+                seg_cut += Form("(SuN_Seg_high_gain_cal[%d]>%d&&SuN_Seg_high_gain_cal[%d]<%d)",i_seg,i_seg,ss_start,ss_end);
             }
         }
         seg_cut += ")";

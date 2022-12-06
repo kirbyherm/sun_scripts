@@ -5,15 +5,15 @@ cmake_minimum_required(VERSION 2.8.8 FATAL_ERROR)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
 message(STATUS "CMAKE_MODULE_PATH: " ${CMAKE_MODULE_PATH}) 
-project(gamma_analysis)
+project(gamma_analysis_sim)
 
 # Add the executable
-add_executable(tas src/tas.cc)
-add_executable(tas_ss_2d src/tas_ss_2d.cc)
-add_executable(ss src/ss.cc)
-add_executable(mult src/mult.cc)
-add_executable(remove_daughter src/remove_daughter.cc)
-add_executable(write_to_csv src/write_to_csv.cc)
+add_executable(tas_sim src/tas_sim.cc)
+add_executable(ss_sim src/ss_sim.cc)
+add_executable(mult_sim src/mult_sim.cc)
+add_executable(tas_sim_mult1 src/tas_sim_mult1.cc)
+add_executable(ss_sim_mult1 src/ss_sim_mult1.cc)
+#add_executable(remove_daughter src/remove_daughter.cc)
 
 
 # Required packages
@@ -25,28 +25,29 @@ find_package(ROOT REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${ROOT_INCLUDE_DIRS})
-target_link_libraries(tas ${ROOT_LIBRARIES}) 
-target_link_libraries(tas_ss_2d ${ROOT_LIBRARIES}) 
-target_link_libraries(ss ${ROOT_LIBRARIES}) 
-target_link_libraries(mult ${ROOT_LIBRARIES}) 
-target_link_libraries(remove_daughter ${ROOT_LIBRARIES}) 
-target_link_libraries(write_to_csv ${ROOT_LIBRARIES}) 
+target_link_libraries(tas_sim ${ROOT_LIBRARIES}) 
+target_link_libraries(ss_sim ${ROOT_LIBRARIES}) 
+target_link_libraries(mult_sim ${ROOT_LIBRARIES}) 
+target_link_libraries(tas_sim_mult1 ${ROOT_LIBRARIES}) 
+target_link_libraries(ss_sim_mult1 ${ROOT_LIBRARIES}) 
+#target_link_libraries(remove_daughter ${ROOT_LIBRARIES}) 
 
 
 # enable warnings
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} `root-config --libs --glibs`")
+
 # enable C++11
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 # Enable floating point exception handling 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fnon-call-exceptions")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fnon-call-exceptions -fpermissive")
 
 # generate debugging symbols for release and debug
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-# enable root libs
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ROOT_CXX_FLAGS}")
 
 # the compiler flags
@@ -68,9 +69,4 @@ message(STATUS "")
 # Add subdirectories
 #add_subdirectory(include)
 
-install(TARGETS tas DESTINATION bin)
-install(TARGETS tas_ss_2d DESTINATION bin)
-install(TARGETS ss DESTINATION bin)
-install(TARGETS mult DESTINATION bin)
-install(TARGETS remove_daughter DESTINATION bin)
-install(TARGETS write_to_csv DESTINATION bin)
+
