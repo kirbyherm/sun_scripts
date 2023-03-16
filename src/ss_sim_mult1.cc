@@ -6,6 +6,12 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#ifndef UTILS_H
+#define UTILS_H
+#include "utils.h"
+#endif
+
+extern const ConfigParams p;
 
 void write_to_csv_ss(int thread=-1, std::string energy="2475", TH1F* h1 = new TH1F()){
 
@@ -37,14 +43,19 @@ TH1F * sumSeg(std::string filename, std::string histname){
     std::vector<std::string> side = {"B","T"}; 
     std::vector<TH1F*> co60_h;
     std::vector<TH1F*> sim_h;
-    TH1F * sumseg_sim = new TH1F(Form("E%s",histname.c_str()),"simulated sum of seg",10000,1,10001);
+    int tas_lower_limit = p.Get_simTAS_Window()[0];
+    int tas_upper_limit = p.Get_simTAS_Window()[1];
+    int ss_lower_limit = p.Get_simSS_Window()[0];
+    int ss_upper_limit = p.Get_simSS_Window()[1];
+    int bin_width = 1;
+    TH1F * sumseg_sim = new TH1F(Form("E%s",histname.c_str()),"simulated sum of seg",int((ss_upper_limit-ss_lower_limit)/bin_width),ss_lower_limit,ss_upper_limit);
 //    TH1F * sumseg_co60 = new TH1F("sumSegCo60","Co60 sum of seg",4000,1,4001);
     double total_co60 = 0;
     double total_sim = 0;
     for(int i =0; i<side.size(); i++){
         for(int j=1; j<5; j++){
 //    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(12000,1,12001)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j),"","");
-    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(10000,1,10001)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j),"eneDSSD>0&&multi==1","");
+    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(%d,%d,%d)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j,int((ss_upper_limit-ss_lower_limit)/bin_width),ss_lower_limit,ss_upper_limit),Form("eneAll>=%d&&eneAll<%d&&eneDSSD>0&&multi==1",tas_lower_limit, tas_upper_limit),"");
 //    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(12000,1,12001)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j),"eneAll>140&&eneAll<220&&eneDSSD>0","");
 //    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(12000,1,12001)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j),"eneAll>1650&&eneAll<1850&&eneDSSD>0","");
 //    t->Draw(Form("ene%s%d>>simSeg_%s_%s%d(12000,1,12001)",side[i].c_str(),j,histname.c_str(),side[i].c_str(),j),"eneAll>1915&&eneAll<2115&&eneDSSD>0","");
@@ -102,26 +113,28 @@ TH1F * sumSeg(std::string filename, std::string histname){
 void ss_sim(int thread=0){
 
 
-    std::vector<std::string> filelist = {"2500","2600","2700","2800","2900","3000","3150","3300","3450","3600","3750","3900","4100","4300","4500","4700","4900","5100","5300","5500","5700","5900","6100","6300","6500","6700","6900","7100","7400","7700","8000","8300","8600","8900","9200","9500","9800","10100","10400"};//,"Test"};
+    std::vector<std::string> templates = p.Get_Levels();
+    std::string isotope = p.Get_Isotope();
+//    std::vector<std::string> filelist = {"0","2476","2500","2600","2700","2800","2900","3000","3150","3300","3450","3650","3850","4050","4250","4450","4650","4850","5050","5250","5500","5700","5900","6100","6300","6500","6700","6900","7100","8000","8300","8600","8900","9200","9500","9800","10100","10400"};//,"Test"};
 ////    std::vector<std::string> filelist = {"Test1000","Test1400","Test2000","Test5000","Test8000"};
     TFile *f = new TFile("RAINIER_ss.root", "RECREATE");
-    for (int i = 0; i<filelist.size(); i++) {
-
-        std::string filename = "Enew"+filelist[i]+".root";
-        TH1F * sumseg_x = new TH1F();
-        sumseg_x = sumSeg(filename, filelist[i]);
-//        sumseg_x->Rebin(4);
-        write_to_csv_ss(thread, filelist[i], sumseg_x);
-        f->cd();
-        sumseg_x->Write();
-    }
-    std::vector<std::string> filelist_samp = {"0","61","113","174","744","1200","1240","1690","1731","1750","1754","2000","2036","2178","2289","2475"};
-//    std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000","2200","2500","2600"};
+//    for (int i = 0; i<filelist.size(); i++) {
+//
+//        std::string filename = "Enew"+filelist[i]+".root";
+//        TH1F * sumseg_x = new TH1F();
+//        sumseg_x = sumSeg(filename, filelist[i]);
+////        sumseg_x->Rebin(4);
+//        write_to_csv_ss(thread, filelist[i], sumseg_x);
+//        f->cd();
+//        sumseg_x->Write();
+//    }
+//    std::vector<std::string> filelist_samp = {"0","61","113","174","1690","1731","1754","2036","2178","2289","2475"};
 //    std::vector<std::string> filelist_samp = {"0","174_m1","174_m2","1731_m1","1731_m2","1731_m3","1754_m1","1754_m2","1754_m3","2036_m1","2036_m2","2036_m3","2036_m4","2036_m5","2475_m1","2475_m2","2475_m3"};
 //    std::vector<std::string> filelist_samp = {"174_m1","174_m2"};
 //    std::vector<std::string> filelist_samp = {"1731","1754"};//"174",,"2036","2475"};
 //    std::vector<std::string> filelist_samp = {"2036"};//"174",,"2036","2475"};
 //    std::vector<std::string> filelist_samp = {"2475"};//"174",,"2036","2475"};
+    std::vector<std::string> filelist_samp = templates;//"174",,"2036","2475"};
     for (int i = 0; i<filelist_samp.size(); i++) {
 //        std::vector<std::string> mult_samp = {"m1","m2"};
         std::vector<std::string> mult_samp = {"m1","m2","m3"};
@@ -129,7 +142,7 @@ void ss_sim(int thread=0){
         for (int j = 0; j<mult_samp.size(); j++) {
          
 //        std::string filename = "../output_57Ti_"+filelist_samp[i]+"_" + mult_samp[j]+".root";
-        std::string filename = "output_57Ti_"+filelist_samp[i]+".root";
+        std::string filename = "output_"+isotope+"_"+filelist_samp[i]+".root";
         TH1F * sumseg_x = new TH1F();
         sumseg_x = sumSeg(filename, filelist_samp[i]);
 //        sumseg_x->Rebin(4);

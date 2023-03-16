@@ -1,8 +1,14 @@
-
+// Kirby Hermansen 
+// 2022-10-19
+// Purpose: To create a histogram of SuN's TAS from geant sim
 
 #include "TFile.h"
 #include "TChain.h"
 #include "TH1F.h"
+#ifndef UTILS_H
+#define UTILS_H
+#include "utils.h"
+#endif
 
 #include <iostream>
 #include <string>
@@ -10,31 +16,34 @@
 #include <fstream>
 
 void tas_sim(int thread=0){
-    std::vector<std::string> filelist_samp = {"0","61","113","174","744","1200","1240","1690","1731","1750","1754","2000","2036","2178","1700500","2289","2475","2476","2500","2600","2700","2800","2900","3000","3150","3300","3450","3600","3750","3900","4100","4300","4500","4700","4900","5100","5300","5500","5700","5900","6100","6300","6500","6700","6900","7100","7400","7700","8000","8300","8600","8900","9200","9500","9800","10100","10400"};//,"Test"};
+//    std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000","2200","2500","2600","2700","2800","2900","3000","3150","3300","3450","3600","3750","3900","4100","4300","4500","4700","4900","5100","5300","5500","5700","5900","6100","6300","6500","6700","6900","7100","7400","7700","8000","8300","8600","8900","9200","9500","9800","10100","10400","10800","11200","11600","12000","12400"};
     //std::vector<std::string> filelist_samp = {"0","364"};
-    //std::vector<std::string> filelist_samp = {"0","364","1100_m1","1100_m2"};
+    extern const ConfigParams p;
+    std::vector<std::string> templates = p.Get_Levels();
+    std::vector<std::string> filelist_samp = templates;
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500_m1","1500_m2"};
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600"};
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000_m1","2000_m2"};
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000","2200_m1","2200_m2"};
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000","2200","2500_m1","2500_m2"};
     //std::vector<std::string> filelist_samp = {"0","364","1100","1500","1600","2000","2200","2500","2600"};
+    std::string isotope = p.Get_Isotope();
+    int tas_lower_limit = p.Get_simTAS_Window()[0];
+    int tas_upper_limit = p.Get_simTAS_Window()[1];
+    int bin_width = 1;
     for (int j = 0; j<filelist_samp.size(); j++) {
         std::string energy=filelist_samp[j];
         
         int energy_int = std::stoi(energy);
         TFile * f1;
-        if (energy_int < 2476 || energy_int == 1700500)
-        f1 = TFile::Open(Form("output_57Ti_%s.root",energy.c_str()));
-        else
-        f1 = TFile::Open(Form("Enew%s.root",energy.c_str()));
+        f1 = TFile::Open(Form("output_%s_%s.root",isotope.c_str(),energy.c_str()));
         TTree *t;
         f1->GetObject("t",t); 
         TH1F * h1;
         //t->Draw("eneAll>>TAS(10,0,10)","eneAll>140&&eneAll<220","");
         //t->Draw("eneAll>>TAS(10000,1,10001)","","");
-        t->Draw("eneAll>>TAS(10000,1,10001)","eneDSSD>0","");
-        //t->Draw("eneAll>>TAS(13000,1,13001)","eneAll>320&&eneAll<415&&eneDSSD>0","");
+//        t->Draw("eneAll>>TAS(13000,1,13001)","eneDSSD>0","");
+        t->Draw(Form("eneAll>>TAS(%d,%d,%d)",int((tas_upper_limit-tas_lower_limit)/bin_width),tas_lower_limit,tas_upper_limit),Form("eneAll>=%d&&eneAll<%d&&eneDSSD>0",tas_lower_limit, tas_upper_limit),"");
         //t->Draw("eneAll>>TAS(13000,1,13001)","eneAll>900&&eneAll<1300&&eneDSSD>0","");
         //t->Draw("eneAll>>TAS(13000,1,13001)","eneAll>1200&&eneAll<1700&&eneDSSD>0","");
         //t->Draw("eneAll>>TAS(13000,1,13001)","eneAll>1550&&eneAll<1760&&eneDSSD>0","");

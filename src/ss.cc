@@ -26,13 +26,14 @@ TH1F* get_histogram_ss(std::string isotope = "ti56", int time_window = 10000, st
     else
         isotope = p.Get_Isotope();
    
+    std::string dssd_window = std::to_string(p.Get_DSSD_Window());
     TChain* chain = new TChain("t");
     for (int i=2052; i<2169; i++)
     {
         std::string run_str = std::to_string(i);
-        std::string filepath = rootfiles_path+str_time_window+"ms/true/Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_9px_bound.root";
+        std::string filepath = rootfiles_path+str_time_window+"ms/true/Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_" + dssd_window + "px_bound.root";
         if (decay_type == "rand")
-            filepath = rootfiles_path+str_time_window+"ms/bg/BWRun" + run_str + "_SuN_" + str_time_window + "ms_" + isotope  + "_9px_bound.root";
+            filepath = rootfiles_path+str_time_window+"ms/bg/BWRun" + run_str + "_SuN_" + str_time_window + "ms_" + isotope  + "_" + dssd_window + "px_bound.root";
         const char * c = filepath.c_str();
         chain->Add(c);
     } 

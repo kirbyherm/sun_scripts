@@ -33,15 +33,19 @@ public:
         LoadParams(filename);
     }
     std::string Get_Cuts(bool, int) const;
+    std::vector<std::string> Get_Levels() const;
     std::string Get_Isotope() const;
     std::string Get_Isotope_Daughter() const;
     bool Use_Daughter() const;
     bool Use_Middle_Segments_Only() const;
+    int Get_DSSD_Window() const;
     int Get_SS_Bin_Width() const;
     int Get_TAS_Bin_Width() const;
     double Get_Scale_Factor() const;
     std::vector<int> Get_TAS_Window() const;
     std::vector<int> Get_SS_Window() const;
+    std::vector<int> Get_simTAS_Window() const;
+    std::vector<int> Get_simSS_Window() const;
 
 private:
 
@@ -49,6 +53,7 @@ private:
     std::string isotope_daughter;
     bool use_daughter;
     bool middle_segments_only;
+    int dssd_window;
     int ss_bin_width;
     int tas_bin_width;
     std::vector<int> tas_window;
@@ -72,6 +77,7 @@ private:
     int mult_start;
     int mult_end;
     double scale_factor;
+    std::vector<std::string> levels;
 
 
 };
@@ -90,6 +96,7 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     tas_bin_width = readJSON<int>(loadPtreeRoot,"tas_bin_width"); 
     tas_window.push_back(readJSON<int>(loadPtreeRoot,"tas_lower_limit")); 
     tas_window.push_back(readJSON<int>(loadPtreeRoot,"tas_upper_limit")); 
+    dssd_window = readJSON<int>(loadPtreeRoot,"dssd_window"); 
     ss_bin_width = readJSON<int>(loadPtreeRoot,"ss_bin_width"); 
     ss_window.push_back(readJSON<int>(loadPtreeRoot,"ss_lower_limit")); 
     ss_window.push_back(readJSON<int>(loadPtreeRoot,"ss_upper_limit")); 
@@ -114,6 +121,12 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     mult_end = readJSON<int>(loadPtreeRoot,"mult_end");
     
     scale_factor = readJSON<double>(loadPtreeRoot,"scale_factor");
+
+    for (pt::ptree::value_type &level : loadPtreeRoot.get_child("levels"))
+    {
+        levels.push_back(level.second.data());
+    }
+
 }
 
 std::string ConfigParams::Get_Isotope() const{
@@ -132,12 +145,28 @@ int ConfigParams::Get_SS_Bin_Width() const{
     return ss_bin_width;
 }
 
+int ConfigParams::Get_DSSD_Window() const{
+    return dssd_window;
+}
+
 std::vector<int> ConfigParams::Get_TAS_Window() const{
     return tas_window; 
 }
 
+std::vector<int> ConfigParams::Get_simTAS_Window() const{
+    return {tas_start, tas_end}; 
+}
+
+std::vector<int> ConfigParams::Get_simSS_Window() const{
+    return {ss_start, ss_end}; 
+}
+
 std::vector<int> ConfigParams::Get_SS_Window() const{
     return ss_window; 
+}
+
+std::vector<std::string> ConfigParams::Get_Levels() const{
+    return levels; 
 }
 
 std::string ConfigParams::Get_Cuts(bool isDaughter=false, int seg=-1) const{
