@@ -36,6 +36,12 @@ public:
     std::vector<std::string> Get_Levels() const;
     std::string Get_Isotope() const;
     std::string Get_Isotope_Daughter() const;
+    std::string Get_Isotope_Granddaughter() const;
+    std::string Get_Isotope_Neutron_Daughter() const;
+    double Get_Daughter_HL() const;
+    double Get_Granddaughter_HL() const;
+    double Get_Neutron_Daughter_HL() const;
+    double Get_Neutron_Granddaughter_HL() const;
     bool Use_Daughter() const;
     bool Use_Middle_Segments_Only() const;
     int Get_DSSD_Window() const;
@@ -77,6 +83,10 @@ private:
     int mult_start;
     int mult_end;
     double scale_factor;
+    double daughterhl;
+    double gdaughterhl;
+    double ndaughterhl;
+    double ngdaughterhl;
     std::vector<std::string> levels;
 
 
@@ -91,6 +101,9 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     pt::read_json(filename.c_str(),loadPtreeRoot);
     isotope = readJSON<std::string>(loadPtreeRoot,"isotope"); 
     isotope_daughter = readJSON<std::string>(loadPtreeRoot,"isotope_daughter"); 
+    isotope_gdaughter = readJSON<std::string>(loadPtreeRoot,"isotope_gdaughter"); 
+    isotope_ndaughter = readJSON<std::string>(loadPtreeRoot,"isotope_ndaughter"); 
+    isotope_ngdaughter = readJSON<std::string>(loadPtreeRoot,"isotope_ngdaughter"); 
     use_daughter = readJSON<bool>(loadPtreeRoot,"use_daughter"); 
     middle_segments_only = readJSON<bool>(loadPtreeRoot,"middle_segments_only"); 
     tas_bin_width = readJSON<int>(loadPtreeRoot,"tas_bin_width"); 
@@ -122,6 +135,13 @@ void ConfigParams::LoadParams(std::string filename="config.json"){
     
     scale_factor = readJSON<double>(loadPtreeRoot,"scale_factor");
 
+    daughterhl = readJSON<double>(loadPtreeRoot,"daughterhl");
+    gdaughterhl = readJSON<double>(loadPtreeRoot,"gdaughterhl");
+    ndaughterhl = readJSON<double>(loadPtreeRoot,"ndaughterhl");
+    ngdaughterhl = readJSON<double>(loadPtreeRoot,"ngdaughterhl");
+
+    decay_bin_width = readJSON<int>(loadPtreeRoot,"decay_bin_width"); 
+
     for (pt::ptree::value_type &level : loadPtreeRoot.get_child("levels"))
     {
         levels.push_back(level.second.data());
@@ -135,6 +155,18 @@ std::string ConfigParams::Get_Isotope() const{
 
 std::string ConfigParams::Get_Isotope_Daughter() const{
     return isotope_daughter;
+}
+
+std::string ConfigParams::Get_Isotope_Granddaughter() const{
+    return isotope_gdaughter;
+}
+
+std::string ConfigParams::Get_Isotope_Neutron_Daughter() const{
+    return isotope_ndaughter;
+}
+
+std::string ConfigParams::Get_Isotope_Neutron_Granddaughter() const{
+    return isotope_ngdaughter;
 }
 
 int ConfigParams::Get_TAS_Bin_Width() const{
@@ -163,6 +195,14 @@ std::vector<int> ConfigParams::Get_simSS_Window() const{
 
 std::vector<int> ConfigParams::Get_SS_Window() const{
     return ss_window; 
+}
+
+std::vector<int> ConfigParams::Get_Parent_Decay_Window() const{
+    return [int(time_start/1e6), int(time_end/1e6)]; 
+}
+
+std::vector<int> ConfigParams::Get_Daughter_Decay_Window() const{
+    return [int(daughter_time_start/1e6), int(daughter_time_end/1e6)]; 
 }
 
 std::vector<std::string> ConfigParams::Get_Levels() const{
@@ -235,6 +275,22 @@ std::string ConfigParams::Get_Cuts(bool isDaughter=false, int seg=-1) const{
     }
 
     return cuts;
+}
+
+double ConfigParams::Get_Daughter_HL() const{
+    return daughterhl;
+}
+
+double ConfigParams::Get_Granddaughter_HL() const{
+    return gdaughterhl;
+}
+
+double ConfigParams::Get_Neutron_Daughter_HL() const{
+    return ndaughterhl;
+}
+
+double ConfigParams::Get_Neutron_Granddaughter_HL() const{
+    return ngdaughterhl;
 }
 
 double ConfigParams::Get_Scale_Factor() const{

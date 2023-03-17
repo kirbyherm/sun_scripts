@@ -2,8 +2,17 @@
     "rootfiles_path" : "/mnt/analysis/e17028/correlated_rootfiles/",
     "isotope" : "ti59",
     "isotope_daughter" : "v59",
-    "use_daughter" : false,
+    "isotope_gdaughter" : "cr59",
+    "isotope_ndaughter" : "v58",
+    "isotope_ngdaughter" : "cr58",
+    "daughterhl" : 92,
+    "gdaughterhl" : 1050,
+    "ndaughterhl" : 190,
+    "ngdaughterhl" : 7000,
+
     "dssd_window": 25,
+
+    "use_daughter" : false,
     "middle_segments_only" : true,
     "tas_bin_width": 50,
     "tas_lower_limit": 1,
@@ -37,4 +46,7 @@
     "cscale_factor": 0.63,
     
     "levels":["0","115"]
+
+
+
 }
