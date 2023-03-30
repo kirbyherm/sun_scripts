@@ -4,6 +4,8 @@
 #include "utils.h"
 #endif
 
+#include "TH2F.h"
+
 extern const ConfigParams p;
 int tas_bin_width = p.Get_TAS_Bin_Width();
 int tas_lower_limit = p.Get_TAS_Window()[0];

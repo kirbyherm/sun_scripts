@@ -1,6 +1,7 @@
 #include "TFile.h"
 #include "TChain.h"
 #include "TH1F.h"
+#include "TH2F.h"
 
 #include <iostream>
 #include <string>

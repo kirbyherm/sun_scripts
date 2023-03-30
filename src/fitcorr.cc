@@ -6,6 +6,9 @@
 #include <vector>
 #include "TString.h"
 #include "TMath.h"
+#include "TF1.h"
+#include "TLegend.h"
+#include "TMinuit.h"
 
 #include "utils.h"
 
@@ -13,21 +16,22 @@
 using namespace std;
 
 double parentN0;
-double daughterl = 0.693/347.0;
-double gdaughterl = 0.693/21000.1;
-double ndaughterl = 0.693/216.0;
-double ngdaughterl = 0.693/32000.0;
+double daughterl = TMath::Log(2)/347.0;
+double gdaughterl = TMath::Log(2)/21000.1;
+double ndaughterl = TMath::Log(2)/216.0;
+double ngdaughterl = TMath::Log(2)/32000.0;
 double daughterhl = p.Get_Daughter_HL();
 double gdaughterhl = p.Get_Granddaughter_HL();
 double ndaughterhl = p.Get_Neutron_Daughter_HL();
 double ngdaughterhl = p.Get_Neutron_Granddaughter_HL();
 const int bin_width = p.Get_Decay_Bin_Width();
+int dssd_window = p.Get_DSSD_Window();
 const int bins = 2000/bin_width;
-Double_t errorc[bins];
-Double_t stuffs[bins];
-Double_t targlist[10];
-Double_t binno[bins];
-Double_t xlim[2] = {0, 2000};
+std::vector<Double_t> errorc(bins);
+std::vector<Double_t> stuffs(bins);
+std::vector<Double_t> targlist(10);
+std::vector<Double_t> binno(bins);
+std::vector<Double_t> xlim = {0, 2000};
 
 
 
@@ -186,6 +190,7 @@ Double_t total_f(Double_t *x, Double_t *par)
 
 //void fitcorr(const char* inputfile){
 Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, double pn_value = 1.0){
+    TFile *fOut = new TFile("output_fitcorr.root","RECREATE");
    //Get inputfile
     std::string str_time_window = Form("%d",time_window);
     TChain* t = new TChain("t");
@@ -203,13 +208,14 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
     TH1F *h1 = new TH1F("h1","h1",50,0,50);
 //    for (int pixel=0; pixel<8; pixel++){
 //    for (int i=2154; i<2169; i++)
+    std::string dssd_window_str = Form("%d",dssd_window);
     for (int i=2054; i<2169; i++)
     {
 //        if( i == 2087)
 //            continue;
         std::string run_str = Form("%d",i);
-        std::string filepath = "/mnt/analysis/e17028/correlated_rootfiles/"+str_time_window+"ms/true/Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_25px_bound.root";
-        std::string filepath_bg = "/mnt/analysis/e17028/correlated_rootfiles/"+str_time_window+"ms/bg/BWRun" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_25px_bound.root";
+        std::string filepath = "/mnt/analysis/e17028/correlated_rootfiles/"+str_time_window+"ms/true/Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_" + dssd_window_str + "px_bound.root";
+        std::string filepath_bg = "/mnt/analysis/e17028/correlated_rootfiles/"+str_time_window+"ms/bg/BWRun" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_" + dssd_window_str + "px_bound.root";
 //        std::string filepath = "/mnt/analysis/e17028/correlated_rootfiles/"+str_time_window+"ms/true/Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + "_9px_bound.root";
 //        std::string filepath = "./Run" + run_str + "_SuN_" + str_time_window + "ms_" + isotope + ".root";
         const char * c = filepath.c_str();
@@ -310,7 +316,7 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
 //   BinBG = TMath::Max(BinBG,(double)0);
    printf("Bin1: %d, BinBG: %d\n", Bin1, BinBG);
 //   int BinBG = 30;
-   Double_t vstart[4] = {0.693/100,Bin1,BinBG,0.10};   //start param
+   Double_t vstart[4] = {TMath::Log(2)/100,Bin1,BinBG,0.10};   //start param
    Double_t step[4] = {.00001,1,0.01,.01};        // Step size used to minimize the parameters
   
   /* Set the fit variables to their initial states from above */
@@ -319,14 +325,14 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
     limit low, limit upper,command (ierflg=0 if mnparm is successful) */
   
   //Parent half-life, param[0]
-  gMinuit->mnparm(0, "parent half-life", vstart[0], step[0],0.693/(500),0.693/(1.0),ierflg);
+  gMinuit->mnparm(0, "parent half-life", vstart[0], step[0],TMath::Log(2)/(1000),TMath::Log(2)/(1.0),ierflg);
 //  gMinuit->mnparm(0, "parent half-life", vstart[0], step[0],0,10000,ierflg);
    cout <<"after parent" << endl;
   //Initial parent activity, param[1]
-   gMinuit->mnparm(1, "N0" , vstart[1], step[1], Bin1*0.7 ,Bin1*4.5,ierflg);
+   gMinuit->mnparm(1, "N0" , vstart[1], step[1], Bin1*0.0 ,Bin1*4.5,ierflg);
   
   //Background, param[2]
-   gMinuit->mnparm(2, "Cbackground", vstart[2], step[2], BinBG*0.0, BinBG*1.7, ierflg); 
+   gMinuit->mnparm(2, "Cbackground", vstart[2], step[2], BinBG*0.0, BinBG*1.9, ierflg); 
 //   gMinuit->mnparm(2, "Cbackground", vstart[2], step[2], BinBG*0.0, BinBG*0.1, ierflg); 
 
   //Pn, param[3]
@@ -434,7 +440,7 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
 //   TF1 *totalrate = new TF1("totalrate",total,xlim[0],xlim[1],4);
    TF1 *totalrate = new TF1("totalrate",total_f,xlim[0],bins,4);
    totalrate->SetParameter(0,ParentT[0]);
-//   totalrate->SetParameter(0,0.693*2/51.1);
+//   totalrate->SetParameter(0,TMath::Log(2)*2/51.1);
    totalrate->SetParameter(1,N0[0]);
    totalrate->SetParameter(2,Background[0]);
    totalrate->SetParameter(3,Pn[0]);
@@ -456,12 +462,12 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
 //     printf("%d\n", content);
      decaycurve->SetBinContent(i,content);
      decaycurve->SetBinError(i,error);
-     if(i<bins-1){
-     std::cout << dparent->Integral(0.0,xlim[1])-dparent->Integral(0,i) << ", " << (dparent->Integral(0,i))*0.92-daughter->Integral(0.0,i) << ", " << (dparent->Integral(0,i))*0.08-ndaughter->Integral(0.0,i) << std::endl;
-    }
+//     if(i<bins-1){
+//     std::cout << dparent->Integral(0.0,xlim[1])-dparent->Integral(0,i) << ", " << (dparent->Integral(0,i))*0.92-daughter->Integral(0.0,i) << ", " << (dparent->Integral(0,i))*0.08-ndaughter->Integral(0.0,i) << std::endl;
+//     }
    }
    decaycurve->Draw("same");
-   dparent->SetTitle(Form("presumed-%s, calcT_1/2 = %0.fms", isotope.c_str(), 0.693/ParentT[0]*histo->GetBinWidth(2)));
+   dparent->SetTitle(Form("presumed-%s, calcT_1/2 = %0.fms", isotope.c_str(), TMath::Log(2)/ParentT[0]*histo->GetBinWidth(2)));
 //   dparent->SetTitleX(0.5);
 //   dparent->SetTitleAlign(23);
    parentN0 = N0[0]/ParentT[0];//*1000*histo->GetBinWidth(0)/1e9;
@@ -472,17 +478,17 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
    dparent->GetXaxis()->SetTitle(Form("Decay Time (%dms bins)",bin_width));
    TLegend *leg = new TLegend(0.5,0.6,0.8,0.8);
    leg->AddEntry(totalrate,"Total");
-   leg->AddEntry(dparent, p.Get_Isotope());// %0.1fms",0.693/(ParentT[0])*(histo->GetBinWidth(2))));
+   leg->AddEntry(dparent, p.Get_Isotope().c_str());// %0.1fms",TMath::Log(2)/(ParentT[0])*(histo->GetBinWidth(2))));
    leg->AddEntry(background, "Background");
-   leg->AddEntry(daughter, p.Get_Isotope_Daughter());
-   leg->AddEntry(gdaughter, p.Get_Isotope_Granddaughter());
-   leg->AddEntry(ndaughter,p.Get_Isotope_Neutron_Daughter());
+   leg->AddEntry(daughter, p.Get_Isotope_Daughter().c_str());
+   leg->AddEntry(gdaughter, p.Get_Isotope_Granddaughter().c_str());
+   leg->AddEntry(ndaughter,p.Get_Isotope_Neutron_Daughter().c_str());
    decaycurve->SetStats(0);
    leg->SetBorderSize(0);
    leg->Draw("Same");
    save_to_png( c1, Form("%s-%s-dt",isotope.c_str(),pixels.c_str()) );
    cout << "done"<< " "<< parentN0 << " bin_width "<< histo->GetBinWidth(2)<<endl;
-   cout << "half-life " << 0.693/(ParentT[0])*(histo->GetBinWidth(2)) << endl;
+   cout << "half-life " << TMath::Log(2)/(ParentT[0])*(histo->GetBinWidth(2)) << endl;
    cout << totalrate->Integral(0.0,xlim[1])<< " " << decaycurve->Integral(0,xlim[1])<< endl;
    cout << daughter->Integral(0.0,xlim[1])<< " " << ndaughter->Integral(0,xlim[1])<< endl;
    cout << "decays: " << dparent->Integral(0.0,xlim[1]) << " background: " <<  background->Integral(0,xlim[1])<< endl;
@@ -491,15 +497,19 @@ Double_t single_fitcorr(std::string isotope="sc54", int time_window = 1000, doub
 //   int parent_time = 300/bin_width;
 //   int daughter_time_lo = 600/bin_width;
 //   int daughter_time_hi = 1200/bin_width;
-   int parent_time = p.Get_Parent_Decay_Window()[1]/bin_width;
+   int parent_time_lo = p.Get_Parent_Decay_Window()[0]/bin_width;
+   int parent_time_hi = p.Get_Parent_Decay_Window()[1]/bin_width;
    int daughter_time_lo = p.Get_Daughter_Decay_Window()[0]/bin_width;
    int daughter_time_hi = p.Get_Daughter_Decay_Window()[1]/bin_width;
-   cout << dparent->Integral(0,parent_time) << ", " << daughter->Integral(0,parent_time) << ", " << ndaughter->Integral(0,parent_time)  <<  ", " << gdaughter->Integral(0,parent_time)  <<  ", " << dparent->Integral(daughter_time_lo,daughter_time_hi) << ", " << daughter->Integral(daughter_time_lo,daughter_time_hi)  << ", " << ndaughter->Integral(daughter_time_lo,daughter_time_hi) << ", " << gdaughter->Integral(daughter_time_lo, daughter_time_hi)  <<  endl;
-   cout << dparent->Integral(0,parent_time)/dparent->Integral(daughter_time_lo,daughter_time_hi) << ", " << daughter->Integral(0,parent_time)/daughter->Integral(daughter_time_lo,daughter_time_hi) <<  ", " << gdaughter->Integral(0,parent_time)/gdaughter->Integral(daughter_time_lo, daughter_time_hi)  <<  endl;
-   cout << background->Integral(0,parent_time) << ", " << background->Integral(daughter_time_lo,daughter_time_hi) << endl;
-   cout << totalrate->Integral(0,parent_time) << ", " << totalrate->Integral(daughter_time_lo,daughter_time_hi) << endl;
+   cout << dparent->Integral(parent_time_lo,parent_time_hi) << ", " << daughter->Integral(parent_time_lo,parent_time_hi) << ", " << ndaughter->Integral(parent_time_lo,parent_time_hi)  <<  ", " << gdaughter->Integral(parent_time_lo,parent_time_hi)  <<  ", " << dparent->Integral(daughter_time_lo,daughter_time_hi) << ", " << daughter->Integral(daughter_time_lo,daughter_time_hi)  << ", " << ndaughter->Integral(daughter_time_lo,daughter_time_hi) << ", " << gdaughter->Integral(daughter_time_lo, daughter_time_hi)  <<  endl;
+   cout << dparent->Integral(parent_time_lo,parent_time_hi)/dparent->Integral(daughter_time_lo,daughter_time_hi) << ", " << daughter->Integral(parent_time_lo,parent_time_hi)/daughter->Integral(daughter_time_lo,daughter_time_hi) <<  ", " << gdaughter->Integral(parent_time_lo,parent_time_hi)/gdaughter->Integral(daughter_time_lo, daughter_time_hi)  <<  endl;
+   cout << background->Integral(parent_time_lo,parent_time_hi) << ", " << background->Integral(daughter_time_lo,daughter_time_hi) << endl;
+   cout << totalrate->Integral(parent_time_lo,parent_time_hi) << ", " << totalrate->Integral(daughter_time_lo,daughter_time_hi) << endl;
 //   }
-   return 0.693/ParentT[0]*histo->GetBinWidth(2);
+   fOut->cd();
+   decaycurve->Write();
+   fOut->Close();
+   return TMath::Log(2)/ParentT[0]*histo->GetBinWidth(2);
 }
 
 
@@ -509,10 +519,10 @@ Double_t fitcorr_bgs(double pn_value = p.Get_Pn() ){
     std::string isotope = p.Get_Isotope();
     int time_window = 2000;
 //    std::vector<double> daughters = halflives(isotope) ;
-    daughterl = 0.693 / (daughterhl / xlim[1]*bins);
-    gdaughterl = 0.693 / (gdaughterhl / xlim[1]*bins);
-    ndaughterl = 0.693 / (ndaughterhl / xlim[1]*bins);
-//    ngdaughterl = 0.693 / (ngdaughterhl / xlim[1]*bins);
+    daughterl = TMath::Log(2) / (daughterhl / xlim[1]*bins);
+    gdaughterl = TMath::Log(2) / (gdaughterhl / xlim[1]*bins);
+    ndaughterl = TMath::Log(2) / (ndaughterhl / xlim[1]*bins);
+//    ngdaughterl = TMath::Log(2) / (ngdaughterhl / xlim[1]*bins);
     Double_t calc_hl = single_fitcorr( isotope, time_window, pn_value );
     return calc_hl;
 }
