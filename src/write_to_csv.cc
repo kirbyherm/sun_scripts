@@ -25,9 +25,10 @@ void write_mult(){
     h1 = (TH1F*)(f1->Get(histName.c_str()));
     std::ofstream myFile(outFile.c_str());
     for ( int i = 1; i<h1->GetNbinsX()+1; i++){
+        int binedge = (h1->GetBinLowEdge(i));
         int binout = TMath::Max((Double_t)(h1->GetBinContent(i)),(Double_t)0);
         int errorout = TMath::Max((Double_t)(h1->GetBinError(i)),(Double_t)0);
-        myFile << i << "," << binout << "," << errorout << "\n";
+        myFile << binedge << "," << binout << "," << errorout << "\n";
     }
     myFile.close();
     return;
@@ -44,9 +45,10 @@ void write_ss(){
     std::ofstream myFile(outFile.c_str());
     
     for ( int i = 1; i<h1->GetNbinsX()+1; i++){
+        int binedge = (h1->GetBinLowEdge(i));
         int binout = TMath::Max((Double_t)(h1->GetBinContent(i)),(Double_t)0);
         int errorout = TMath::Max((Double_t)(h1->GetBinError(i)),(Double_t)0);
-        myFile << i << "," << binout << "," << errorout << "\n";
+        myFile << binedge << "," << binout << "," << errorout << "\n";
     }
     myFile.close();
     return;
@@ -64,9 +66,10 @@ void write_tas(){
     h1 = (TH1F*)(f1->Get(histName.c_str()));
     std::ofstream myFile(outFile.c_str());
     for ( int i = 1; i<h1->GetNbinsX()+1; i++){
+        int binedge = (h1->GetBinLowEdge(i));
         int binout = TMath::Max((Double_t)(h1->GetBinContent(i)),(Double_t)0);
         int errorout = TMath::Max((Double_t)(h1->GetBinError(i)),(Double_t)0);
-        myFile << i << "," << binout << "," << errorout << "\n";
+        myFile << binedge << "," << binout << "," << errorout << "\n";
         if (i > 15 && i < 20)
         std::cout << i << "," << binout << " : " << h1->GetBinContent(i) << "," << errorout  << " : " << h1->GetBinError(i)<< "\n";
     }

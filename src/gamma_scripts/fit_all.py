@@ -9,8 +9,7 @@ from scipy.optimize import lsq_linear, minimize, Bounds, NonlinearConstraint
 from datetime import datetime
 
 import shutil
-import utils
-from utils import load_all, total_minimize, chisq, running_chisq, monte_carlo, plot_all
+from . import utils as utils
 
 import json
 
@@ -42,8 +41,8 @@ def main(samp=0):
     now = datetime.now()
     dt_string = now.strftime("%d%m%Y-%H.%M.%S")
     os.makedirs(dt_string)
-    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = load_all(samp)
-#    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim = load_all()
+    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = utils.load_all(samp)
+#    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim = utils.load_all()
 
 #    df_tas = df_tas.iloc[:150,:]
 #    df_ss = df_ss.iloc[:700,:]
@@ -71,12 +70,12 @@ def main(samp=0):
     nlc = NonlinearConstraint(con, 0.999, 1.001)
     con1 = ({'type': 'eq', 'fun': con})
     fit_param = 'm1'
-    popt_all = minimize(total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, fit_param), bounds=bounds, constraints=con1)
-#    popt_all = minimize(total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim), bounds=bounds, constraints=con1)
-#    popt_all = minimize(total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim))
+    popt_all = minimize(utils.total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, fit_param), bounds=bounds, constraints=con1)
+#    popt_all = minimize(utils.total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim), bounds=bounds, constraints=con1)
+#    popt_all = minimize(utils.total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim))
     data_coef=popt_all.x
 #    df_tas['error'] = df_tas['error'].apply(lambda x: x*10)
-    df_tas['chi2'] = running_chisq(data_coef, df_tas_sim, df_tas)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
+    df_tas['chi2'] = utils.running_chisq(data_coef, df_tas_sim, df_tas)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
     running_chi2 = []
     for i in range((df_tas.shape[0])):
         if i > 0:
@@ -85,7 +84,7 @@ def main(samp=0):
             running_chi2.append(df_tas['chi2'][i])
     df_tas['sumchi2'] = running_chi2
 #    df_ss['error'] = df_ss['error'].apply(lambda x: x*10)
-    df_ss['chi2'] = running_chisq(data_coef, df_ss_sim, df_ss)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
+    df_ss['chi2'] = utils.running_chisq(data_coef, df_ss_sim, df_ss)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
     running_chi2 = []
     for i in range((df_ss.shape[0])):
         if i > 0:
@@ -93,7 +92,7 @@ def main(samp=0):
         else:
             running_chi2.append(df_ss['chi2'][i])
     df_ss['sumchi2'] = running_chi2
-    df_mult['chi2'] = running_chisq(data_coef, df_mult_sim, df_mult)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
+    df_mult['chi2'] = utils.running_chisq(data_coef, df_mult_sim, df_mult)#/int(df_tas.shape[0]+df_ss.shape[0]-len(data_coef))
     running_chi2 = []
     for i in range((df_mult.shape[0])):
         if i > 0:
@@ -105,7 +104,7 @@ def main(samp=0):
     df_ss['fit'] = np.sum(np.multiply(df_ss_sim,popt_all.x),axis=1)
     df_mult['fit'] = np.sum(np.multiply(df_mult_sim,popt_all.x),axis=1)
     df_ss_m1['fit'] = np.sum(np.multiply(df_ss_m1_sim,popt_all.x),axis=1)
-    plot_all(df_tas, df_ss, df_mult, df_ss_m1)
+    utils.plot_all(df_tas, df_ss, df_mult, df_ss_m1)
     f = open("{}/{}".format(dt_string, "output.txt"),'w')
     f.write("{}".format(popt_all))
     f.write("\n")
@@ -115,7 +114,9 @@ def main(samp=0):
         print("{0} , {1:.2f}".format(energies[i],popt_all.x[i]*100))
         f.write("{0} , {1:.2f}\n".format(energies[i],popt_all.x[i]*100))
         if 'n' not in energies[i]:
-            if int(energies[i]) > config['cutoff']:
+            if 'm' in energies[i]:
+                continue
+            elif int(energies[i]) > config['cutoff']:
                 continuum += popt_all.x[i]*100
     f.write("{0:.2f}\n".format(continuum))
     f.write(df_tas.to_string())

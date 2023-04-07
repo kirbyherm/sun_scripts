@@ -78,6 +78,7 @@ void remove_daughter_ss(){
         parent_out->SetBinError(i, parent_bgs->GetBinError(i));
 //        std::cout << parent_error->GetBinContent(i) << ", " << daughter_error->GetBinContent(i) << ", " << parent_out->GetBinContent(i)<< std::endl;
 //        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i)/std::max(parent_error->GetBinContent(i),1.0),2)+pow(daughter_bgs->GetBinError(i)/std::max(daughter_bgs->GetBinContent(i),1.0),2)))*(std::max(parent_out->GetBinContent(i),1.0)));
+        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i),2)+pow(daughter_bgs->GetBinError(i)*scale_factor,2))));
         if (parent_out->GetBinError(i) < 1)
         parent_out->SetBinError(i, 1);
     }
@@ -111,6 +112,7 @@ void remove_daughter_mult(){
         parent_out->SetBinContent(i, parent_bgs->GetBinContent(i));
         parent_out->SetBinError(i, parent_bgs->GetBinError(i));
 //        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i)/std::max(parent_error->GetBinContent(i),1.0),2)+pow(daughter_bgs->GetBinError(i)/std::max(daughter_bgs->GetBinContent(i),1.0),2)))*(std::max(parent_out->GetBinContent(i),1.0)));
+        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i),2)+pow(daughter_bgs->GetBinError(i)*scale_factor,2))));
         if (parent_out->GetBinError(i) < 1)
         parent_out->SetBinError(i, 1);
     }
@@ -146,6 +148,7 @@ void remove_daughter_tas(){
         parent_out->SetBinError(i, parent_bgs->GetBinError(i));
 //        std::cout << parent_error->GetBinContent(i) << ", " << daughter_bgs->GetBinContent(i) << std::endl;
 //        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i)/std::max(parent_error->GetBinContent(i),parent_error->GetBinError(i)),2)+pow(daughter_bgs->GetBinError(i)/std::max(daughter_bgs->GetBinContent(i),daughter_bgs->GetBinError(i)),2)))*(std::max(parent_out->GetBinContent(i),1.0)));
+        parent_out->SetBinError(i, (sqrt(pow(parent_error->GetBinError(i),2)+pow(daughter_bgs->GetBinError(i)*scale_factor,2))));
         if (parent_out->GetBinError(i) < 1)
         parent_out->SetBinError(i, 1);
     }

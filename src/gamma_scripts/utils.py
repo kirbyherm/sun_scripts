@@ -109,7 +109,7 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     print(df_tas, tas_bin_width, tas_lower_cut, tas_upper_cut)
 
     # Draw tas
-    lo_plot, hi_plot = int(tas_lower_cut/tas_bin_width), int(tas_upper_cut/tas_bin_width)
+    lo_plot, hi_plot = 0, int(df_tas.shape[0])
     fig, ax = plt.subplots()
 #    plt.errorbar((np.arange(df_tas.shape[0])*tas_bin_width)[lo_plot:hi_plot],df_tas['content'][lo_plot:hi_plot],yerr=df_tas['error'][lo_plot:hi_plot],label='obs',capsize=2,elinewidth=0.5,barsabove=True,errorevery=1)
 #    plt.plot((np.arange(df_tas.shape[0])*tas_bin_width)[lo_plot:hi_plot],df_tas['fit'][lo_plot:hi_plot],label='fit')
@@ -132,8 +132,8 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     # Draw ss
     plt.cla()
     ss_lower_cut = 0
-    ss_upper_cut = 2100
-    lo_plot, hi_plot = int(ss_lower_cut/ss_bin_width), int(ss_upper_cut/ss_bin_width)
+    ss_upper_cut = min(config['cutoff'], config['ss_upper_limit'] - config['ss_bin_width'])
+    lo_plot, hi_plot = int(ss_lower_cut/ss_bin_width), int(list(df_ss.bin).index(ss_upper_cut))
     print(lo_plot, hi_plot, df_ss)
     fig, ax = plt.subplots()
 #    plt.errorbar((np.arange(df_ss.shape[0])*ss_bin_width)[lo_plot:hi_plot],df_ss['content'][lo_plot:hi_plot],yerr=df_ss['error'][lo_plot:hi_plot],label='obs',capsize=2,elinewidth=0.5,barsabove=True,errorevery=1)
@@ -145,7 +145,7 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     xmin, xmax, ymin, ymax = plt.axis()
     plt.xlabel("keV")
     plt.ylabel("counts/{}keV".format(ss_bin_width))
-    plt.yscale('log')
+#    plt.yscale('log')
 #    plt.ylim([1,ymax])
     ax2 = ax.twinx()
     ax2.plot(df_ss['bin'][lo_plot:hi_plot],df_ss['sumchi2'][lo_plot:hi_plot], 'r', linestyle='dashed', label='red chi2')
@@ -157,8 +157,7 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     plt.cla()
     ss_lower_cut = 2100
     ss_upper_cut = 12800
-    lo_plot, hi_plot = int(ss_lower_cut/ss_bin_width), int(ss_upper_cut/ss_bin_width)
-    print(lo_plot, hi_plot, df_ss)
+    lo_plot, hi_plot = int(0), int(df_ss.shape[0])
     fig, ax = plt.subplots()
 #    plt.errorbar((np.arange(df_ss.shape[0])*ss_bin_width)[lo_plot:hi_plot],df_ss['content'][lo_plot:hi_plot],yerr=df_ss['error'][lo_plot:hi_plot],label='obs',capsize=2,elinewidth=0.5,barsabove=True,errorevery=1)
 #    plt.plot((np.arange(df_ss.shape[0])*ss_bin_width)[lo_plot:hi_plot],df_ss['fit'][lo_plot:hi_plot],label='fit')
@@ -197,7 +196,8 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     plt.cla()
     ss_lower_cut = config['ss_lower_limit']
     ss_upper_cut = config['ss_upper_limit']
-    lo_plot, hi_plot = int(ss_lower_cut/ss_bin_width), int(ss_upper_cut/ss_bin_width)
+    lo_plot, hi_plot = int(0), int(df_ss_m1.shape[0])
+    print(lo_plot, hi_plot, df_ss_m1)
     fig, ax = plt.subplots()
 #    plt.errorbar((np.arange(df_ss.shape[0])*ss_bin_width)[lo_plot:hi_plot],df_ss['content'][lo_plot:hi_plot],yerr=df_ss['error'][lo_plot:hi_plot],label='obs',capsize=2,elinewidth=0.5,barsabove=True,errorevery=1)
     plt.errorbar(df_ss_m1['bin'][lo_plot:hi_plot],df_ss_m1['content'][lo_plot:hi_plot],yerr=df_ss_m1['error'][lo_plot:hi_plot],label='obs',capsize=2,elinewidth=0.5,barsabove=True,errorevery=1)
@@ -208,8 +208,8 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
     plt.xlabel("keV")
     plt.ylabel("counts/{}keV".format(ss_bin_width))
     plt.yscale('log')
-    plt.ylim(1,4000)
-    plt.xlim(0,10000)
+#    plt.ylim(1,4000)
+#    plt.xlim(0,10000)
 #    ax2 = ax.twinx()
 #    ax2.plot((np.arange(df_ss.shape[0])*ss_bin_width)[lo_plot:hi_plot],df_ss['sumchi2'][lo_plot:hi_plot], 'r', linestyle='dashed', label='red chi2')
 #    ax2.set_ylabel('cumulative chi2')
@@ -220,45 +220,50 @@ def plot_all(df_tas, df_ss, df_mult, df_ss_m1, figname="", config=load_configs()
 
     return
 
-def rebin_data(df, config=load_configs()):
-    tas_bin_width = config['tas_bin_width']
-    tas_lower_cut = config['tas_lower_limit']
-    tas_upper_cut = config['tas_upper_limit']
-    ss_bin_width = config['ss_bin_width']
-    ss_lower_cut = config['ss_lower_limit']
-    ss_upper_cut = config['ss_upper_limit']
+def rebin_data(df, spec='tas',  config=load_configs()):
+    discrete_bin_width = config['tas_bin_width']
+    lower_cut = config['tas_lower_limit']
+    upper_cut = config['tas_upper_limit']
+    if spec == 'ss':
+        discrete_bin_width = config['ss_bin_width']
+        lower_cut = config['ss_lower_limit']
+        upper_cut = config['ss_upper_limit']
     energies = config['levels']
     isotope = config['isotope']
     cutoff = config['cutoff']
+    contbins = config['contbins']
 
-    energies_int = []
-    cont_bins = 0
-    n_levels = 0
-    for i in energies:
-        if "n" in i:
-            n_levels+=1
-            continue
-        if cutoff > tas_upper_cut:
-            continue
-        energies_int.append(int(i))
-        if int(i) >= cutoff:
-            cont_bins += 1
-    discrete_bin_width = tas_bin_width
-    cutoff_bin = int(min(cutoff,tas_upper_cut)/discrete_bin_width)
-    running_bin_values = [0] 
-    bin_widths = np.zeros(cutoff_bin + cont_bins) + discrete_bin_width 
-    for i in range(len(bin_widths)):
-        if i > cutoff_bin and i < len(bin_widths)-1:
-            bin_widths[i] = energies_int[i-cutoff_bin+len(energies)-cont_bins-n_levels]-energies_int[i-cutoff_bin+len(energies)-cont_bins-1-n_levels]
-        elif i > cutoff_bin:
-            bin_widths[i] = 400
-        if i > 0:
-            running_bin_values.append(bin_widths[i]+running_bin_values[i-1])
-#    print(running_bin_values)
+    
+
+#    energies_int = []
+#    cont_bins = 0
+#    n_levels = 0
+#    for i in energies:
+#        if "n" in i:
+#            n_levels+=1
+#            continue
+#        if cutoff > tas_upper_cut:
+#            continue
+#        energies_int.append(int(i))
+#        if int(i) >= cutoff:
+#            cont_bins += 1
+    bins = np.arange(lower_cut, min(upper_cut, cutoff), discrete_bin_width)
+    cont = contbins.index(cutoff)
+    for i in range(cont, len(contbins)):
+        np.append(bins, [contbins[i]])
+    print(bins)
+    bin_widths = np.zeros(len(bins), dtype=int)
+    for i in range(len(bins)):
+        if i > 0 and i < len(bins)-1:
+            bin_widths[i-1] = bins[i] - bins[i-1]
+        elif i > 0:
+            bin_widths[i-1] = bins[i] - bins[i-1]
+            bin_widths[i] = upper_cut - bins[i]
+    print(bins, bin_widths)
     df_new = pd.DataFrame()
-    bins = np.zeros(len(bin_widths),dtype=int) 
-    contents = np.zeros(len(bin_widths),dtype=float) 
-    errors = np.zeros(len(bin_widths),dtype=float) 
+#    bins = np.zeros(len(bin_widths),dtype=int) 
+    contents = np.zeros(len(bins),dtype=float) 
+    errors = np.zeros(len(bins),dtype=float) 
     bin_width_counter = 0
     bin_counter = 0
 #    print(df.at[0,'content'])
@@ -268,52 +273,64 @@ def rebin_data(df, config=load_configs()):
             bin_counter += 1
             if bin_counter >= len(bin_widths):
                 break
-            bins[bin_counter] = bin_width_counter 
-            if bin_counter>1:
-                bins[bin_counter] += bins[bin_counter-1]
+#            bins[bin_counter] = bin_width_counter 
+#            if bin_counter>1:
+#                bins[bin_counter] += bins[bin_counter-1]
             bin_width_counter = 0
         contents[bin_counter] += df.at[i,'content']*discrete_bin_width/bin_widths[bin_counter]
         errors[bin_counter] += df.at[i,'error'] * df.at[i,'error']
         bin_width_counter += discrete_bin_width
     df_new['content'] = contents
-    df_new['bin'] = running_bin_values
+#    df_new['bin'] = running_bin_values
+    df_new['bin'] = bins
     df_new['error'] = errors
     return df_new
 
-def rebin_sims(df, config):
-    tas_bin_width = config['tas_bin_width']
-    tas_lower_cut = config['tas_lower_limit']
-    tas_upper_cut = config['tas_upper_limit']
-    ss_bin_width = config['ss_bin_width']
-    ss_lower_cut = config['ss_lower_limit']
-    ss_upper_cut = config['ss_upper_limit']
+def rebin_sims(df, spec='tas',  config=load_configs()):
+    discrete_bin_width = config['tas_bin_width']
+    lower_cut = config['tas_lower_limit']
+    upper_cut = config['tas_upper_limit']
+    if spec == 'ss':
+        discrete_bin_width = config['ss_bin_width']
+        lower_cut = config['ss_lower_limit']
+        upper_cut = config['ss_upper_limit']
     energies = config['levels']
     isotope = config['isotope']
     cutoff = config['cutoff']
+    contbins = config['contbins']
 
-    energies_int = []
-    cont_bins = 0
-    n_levels = 0
-    for i in energies:
-        if "n" in i:
-            n_levels+=1
-            continue
-        if cutoff > tas_upper_cut:
-            continue
-        energies_int.append(int(i))
-        if int(i) >= cutoff:
-            cont_bins += 1
-    discrete_bin_width = tas_bin_width
-    running_bin_values = [0] 
-    cutoff_bin = int(min(cutoff,tas_upper_cut)/discrete_bin_width)
-    bin_widths = np.zeros(cutoff_bin + cont_bins) + discrete_bin_width 
-    for i in range(len(bin_widths)):
-        if i > cutoff_bin and i < len(bin_widths)-1:
-            bin_widths[i] = energies_int[i-cutoff_bin+len(energies)-cont_bins-n_levels]-energies_int[i-cutoff_bin+len(energies)-cont_bins-1-n_levels]
-        elif i > cutoff_bin:
-            bin_widths[i] = 400
-        if i > 0:
-            running_bin_values.append(bin_widths[i]+running_bin_values[i-1])
+#    energies_int = []
+#    cont_bins = 0
+#    n_levels = 0
+#    for i in energies:
+#        if "n" in i:
+#            n_levels+=1
+#            continue
+#        if cutoff > tas_upper_cut:
+#            continue
+#        energies_int.append(int(i))
+#        if int(i) >= cutoff:
+#            cont_bins += 1
+#    running_bin_values = [0] 
+#    cutoff_bin = int(min(cutoff,tas_upper_cut)/discrete_bin_width)
+#    bin_widths = np.zeros(cutoff_bin + cont_bins) + discrete_bin_width 
+#    for i in range(len(bin_widths)):
+#        if i > cutoff_bin and i < len(bin_widths)-1:
+#            bin_widths[i] = energies_int[i-cutoff_bin+len(energies)-cont_bins-n_levels]-energies_int[i-cutoff_bin+len(energies)-cont_bins-1-n_levels]
+#        elif i > cutoff_bin:
+#            bin_widths[i] = 400
+    bins = np.arange(lower_cut, min(upper_cut, cutoff), discrete_bin_width)
+    cont = contbins.index(cutoff)
+    for i in range(cont, len(contbins)):
+        np.append(bins, [contbins[i]])
+    print(bins)
+    bin_widths = np.zeros(len(bins), dtype=int)
+    for i in range(len(bins)):
+        if i > 0 and i < len(bins)-1:
+            bin_widths[i-1] = bins[i] - bins[i-1]
+        elif i > 0:
+            bin_widths[i-1] = bins[i] - bins[i-1]
+            bin_widths[i] = upper_cut - bins[i]
 #    bin_widths = np.zeros(cont_bins+cutoff_bin)
 #    running_bin_values = [0]
 #    for i in range(len(bin_widths)):
@@ -332,7 +349,7 @@ def rebin_sims(df, config):
 #            running_bin_values.append(bin_widths[i]+running_bin_values[i-1])
 #    print(running_bin_values)
     df_new = pd.DataFrame()
-    for j in range(df.shape[1]):
+    for j in range(len(energies)):
         contents = np.zeros(len(bin_widths),dtype=float) 
         bin_width_counter = 0
         bin_counter = 0
@@ -342,8 +359,10 @@ def rebin_sims(df, config):
                 bin_width_counter = 0
             if bin_counter >= len(bin_widths):
                 break
-            contents[bin_counter] += df.at[i,'h{}'.format(energies[j])]*discrete_bin_width/bin_widths[bin_counter]
-            bin_width_counter += discrete_bin_width
+#            contents[bin_counter] += df.at[i,'h{}'.format(energies[j])]*discrete_bin_width/bin_widths[bin_counter]
+            contents[bin_counter] += df.at[i,'h{}'.format(energies[j])]
+#            bin_width_counter += discrete_bin_width
+            bin_width_counter += 1
         df_new['h{}'.format(energies[j])] = contents
     return df_new
 
@@ -368,8 +387,9 @@ def load_tas_sims(scale_factor, config=load_configs(), samp=0):
             data = np.loadtxt(GEANT_DIR+'tas_new/output_{}.csv'.format(i),delimiter=',')
         content = data[:,1]/np.sum(data[:,1])*scale_factor
         df['h{}'.format(i)] = content
-    df = df.groupby(df.index // tas_bin_width).sum()
-    return df.iloc[:upper_cut,:]
+    return df
+#    df = df.groupby(df.index // tas_bin_width).sum()
+#    return df.iloc[:upper_cut,:]
 
 def load_mult_sims(scale_factor, config=load_configs(), samp=0):
     energies=config['levels']
@@ -410,8 +430,9 @@ def load_ss_sims(scale_factor, config=load_configs(), samp=0):
             data = np.loadtxt(GEANT_DIR+'ss_new/Enew{}.csv'.format(i),delimiter=',')
         content = data[:,1]/np.sum(data[:,1])*scale_factor
         df['h{}'.format(i)] = content
-    df = df.groupby(df.index // ss_bin_width).sum()
-    return df.iloc[:upper_cut,:]
+#    df = df.groupby(df.index // ss_bin_width).sum()
+#    return df.iloc[:upper_cut,:]
+    return df
 
 def load_ss_m1_sims(scale_factor, config=load_configs(), samp=0):
     df = pd.DataFrame()
@@ -435,8 +456,9 @@ def load_ss_m1_sims(scale_factor, config=load_configs(), samp=0):
 #            data = np.loadtxt(WORK_DIR+'ss_csv/Enew{}.csv'.format(i),delimiter=',')
         content = data[:,1]/np.sum(data[:,1])*scale_factor
         df['h{}'.format(i)] = content
-    df = df.groupby(df.index // ss_bin_width).sum()
-    return df.iloc[:upper_cut,:]
+#    df = df.groupby(df.index // ss_bin_width).sum()
+#    return df.iloc[:upper_cut,:]
+    return df
 
 
 def normalize_sims(df, scale_factor, config=load_configs()):
@@ -471,20 +493,21 @@ def load_all(samp=0, temp=""):
     isotope = config['isotope']
     
     df_tas = pd.read_csv(WORK_DIR+"{}_tas_obs{}.csv".format(isotope, temp),names=["bin","content","error"],dtype=(float,float))
-    df_tas = rebin_data(df_tas)
+    df_tas = rebin_data(df_tas, 'tas', config)
     tas_lower_cut = int(tas_lower_cut/tas_bin_width)
     tas_upper_cut = int(tas_upper_cut/tas_bin_width)
-    df_tas = df_tas.iloc[tas_lower_cut:tas_upper_cut,:]
+#    df_tas = df_tas.iloc[tas_lower_cut:tas_upper_cut,:]
 #    df_tas['error'] = df_tas['error'].apply(lambda x: x*0.10+5)
     df_tas = df_tas.reset_index(drop=True)
     df_ss = pd.read_csv(WORK_DIR+"{}_ss_obs{}.csv".format(isotope, temp),names=["bin","content","error"],dtype=(float,float))
     df_ss_m1 = pd.read_csv(WORK_DIR+"mult_1/{}_ss_obs{}.csv".format(isotope,temp),names=["bin","content","error"],dtype=(float,float))
     ss_lower_cut = int(ss_lower_cut/ss_bin_width)
     ss_upper_cut = int(ss_upper_cut/ss_bin_width)
-    df_ss = df_ss.iloc[ss_lower_cut:ss_upper_cut,:]
-    df_ss = rebin_data(df_ss)
+    df_ss = rebin_data(df_ss, 'ss', config)
+#    df_ss = df_ss.iloc[ss_lower_cut:ss_upper_cut,:]
     df_ss = df_ss.reset_index(drop=True)
-    df_ss_m1 = rebin_data(df_ss_m1)
+    df_ss_m1 = rebin_data(df_ss_m1, 'ss', config)
+#    df_ss_m1 = df_ss_m1.iloc[ss_lower_cut:ss_upper_cut,:]
     df_ss_m1 = df_ss_m1.reset_index(drop=True)
 #    print(ss_upper_cut)
 #    df_ss['error'] = df_ss['error'].apply(lambda x: x*0.50+20)
@@ -493,20 +516,20 @@ def load_all(samp=0, temp=""):
 #    df_mult['error'] = df_mult['error'].apply(lambda x: x*10)
     scale_factor = np.sum(df_tas['content'])
     df_tas_sim = load_tas_sims(scale_factor, config, samp)
-    df_tas_sim = rebin_sims(df_tas_sim, config)
-    df_tas_sim = df_tas_sim.iloc[tas_lower_cut:tas_upper_cut,:]
+    df_tas_sim = rebin_sims(df_tas_sim, 'tas', config)
+#    df_tas_sim = df_tas_sim.iloc[tas_lower_cut:tas_upper_cut,:]
     df_tas_sim = normalize_sims(df_tas_sim, scale_factor, config)
     df_tas_sim = df_tas_sim.reset_index(drop=True)
     scale_factor = np.sum(df_ss['content'])
     df_ss_sim = load_ss_sims(scale_factor, config, samp)
-    df_ss_sim = rebin_sims(df_ss_sim, config)
+    df_ss_sim = rebin_sims(df_ss_sim, 'ss', config)
 #    df_ss_sim = df_ss_sim.iloc[ss_lower_cut:ss_upper_cut,:]
     df_ss_sim = normalize_sims(df_ss_sim, scale_factor, config)
     df_ss_sim = df_ss_sim.reset_index(drop=True)
     scale_factor = np.sum(df_ss_m1['content'])
     df_ss_m1_sim = load_ss_m1_sims(scale_factor, config ,samp)
-    df_ss_m1_sim = rebin_sims(df_ss_m1_sim, config)
-#    df_ss_sim = df_ss_sim.iloc[ss_lower_cut:ss_upper_cut,:]
+    df_ss_m1_sim = rebin_sims(df_ss_m1_sim, 'ss', config)
+#    df_ss_m1_sim = df_ss_m1_sim.iloc[ss_lower_cut:ss_upper_cut,:]
     df_ss_m1_sim = normalize_sims(df_ss_m1_sim, scale_factor, config)
     df_ss_m1_sim = df_ss_m1_sim.reset_index(drop=True)
     scale_factor = np.sum(df_mult['content'])

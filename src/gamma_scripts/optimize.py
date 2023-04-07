@@ -25,11 +25,11 @@ from utils import load_all, multi_minimize, chisq, run, load_configs
 from pandas import read_csv
 import json
 
-WORK_DIR = './'
-SCRATCH_DIR = '/scratch/hermanse/ti57'
 
 config = load_configs()
 energies = config['levels']
+WORK_DIR = './'
+SCRATCH_DIR = '/scratch/hermanse/{}'.format(config['isotope'])
 names = []
 for h in energies:
 	names.append('h'+str(h))

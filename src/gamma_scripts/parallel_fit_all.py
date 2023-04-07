@@ -9,7 +9,8 @@ from scipy.optimize import lsq_linear, minimize, Bounds, NonlinearConstraint
 from multiprocessing import Pool, Process, Queue, current_process, freeze_support
 import json
 
-from utils import load_all, total_minimize, chisq, running_chisq, monte_carlo, plot_all, normalize_sims
+from . import utils as utils
+#from utils import load_all, total_minimize, chisq, running_chisq, monte_carlo, plot_all, normalize_sims
 
 # script, first, second = sys.argv
 WORK_DIR = '../'
@@ -48,7 +49,7 @@ if len(true_fit) != len(energies):
 def parallel_eval(i):
 
     # load data
-    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = load_all()
+    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = utils.load_all()
 
     total_n_tas = np.sum(df_tas['content'])
     total_n_ss = np.sum(df_ss['content'])
@@ -81,10 +82,10 @@ def parallel_eval(i):
 #    ss_rand = np.random.normal(df_ss['content'], df_ss['error'],size=df_ss.shape[0])
 #    mult_rand = np.random.normal(df_mult['content'], df_mult['error'],size=df_mult.shape[0])
     if i > -1:
-        df_tas = monte_carlo(df_tas,tas_rand,i)
-        df_ss = monte_carlo(df_ss,ss_rand,i)
-        df_ss_m1 = monte_carlo(df_ss_m1,ss_m1_rand,i)
-        df_mult = monte_carlo(df_mult,mult_rand,i)
+        df_tas = utils.monte_carlo(df_tas,tas_rand,i)
+        df_ss = utils.monte_carlo(df_ss,ss_rand,i)
+        df_ss_m1 = utils.monte_carlo(df_ss_m1,ss_m1_rand,i)
+        df_mult = utils.monte_carlo(df_mult,mult_rand,i)
     else:
         print("not randomizing")
 
@@ -93,10 +94,10 @@ def parallel_eval(i):
     total_i_ss = np.sum(df_ss['content'])
     total_i_ss_m1 = np.sum(df_ss_m1['content'])
     total_i_mult = np.sum(df_mult['content'])
-    df_tas_sim = normalize_sims(df_tas_sim, total_i_tas)
-    df_ss_sim = normalize_sims(df_ss_sim, total_i_ss)
-    df_ss_m1_sim = normalize_sims(df_ss_m1_sim, total_i_ss_m1)
-    df_mult_sim = normalize_sims(df_mult_sim, total_i_mult)
+    df_tas_sim = utils.normalize_sims(df_tas_sim, total_i_tas)
+    df_ss_sim = utils.normalize_sims(df_ss_sim, total_i_ss)
+    df_ss_m1_sim = utils.normalize_sims(df_ss_m1_sim, total_i_ss_m1)
+    df_mult_sim = utils.normalize_sims(df_mult_sim, total_i_mult)
 #    df_tas['error'] = df_tas['content'].apply(lambda x: np.sqrt(x))
 #    df_ss['error'] = df_ss['content'].apply(lambda x: np.sqrt(x))
 #    df_mult['error'] = df_mult['content'].apply(lambda x: np.sqrt(x))
@@ -108,13 +109,13 @@ def parallel_eval(i):
 #    if i == 0:
 #        print("chi2: {}, reduced_chi2: {}".format(chi2, chi2/reduce_factor))
     # run minimization
-    popt_all = minimize(total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, 'all'), bounds=bounds, constraints=con1)
-    chi2 += chisq(popt_all.x, df_tas_sim, df_tas)
+    popt_all = minimize(utils.total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, 'all'), bounds=bounds, constraints=con1)
+    chi2 += utils.chisq(popt_all.x, df_tas_sim, df_tas)
     reduce_factor = max(df_tas.shape[0]-test.shape[0],1)
-    ss_chi2 = chisq(popt_all.x, df_ss_sim, df_ss)
-    ss_m1_chi2 = chisq(popt_all.x, df_ss_m1_sim, df_ss_m1)
+    ss_chi2 = utils.chisq(popt_all.x, df_ss_sim, df_ss)
+    ss_m1_chi2 = utils.chisq(popt_all.x, df_ss_m1_sim, df_ss_m1)
 #    reduce_factor = max(df_ss.shape[0]+df_tas.shape[0]-test.shape[0],1)
-    mult_chi2 = chisq(popt_all.x, df_mult_sim, df_mult)
+    mult_chi2 = utils.chisq(popt_all.x, df_mult_sim, df_mult)
 #    reduce_factor = max(df_ss.shape[0]+df_tas.shape[0]+df_mult.shape[0]-test.shape[0],1)
     return_array = popt_all.x
     return_array = np.append(return_array, [df_tas.at[int(170/25),'content']])
@@ -133,7 +134,7 @@ def parallel_eval(i):
 def main():
 
     # load data
-    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = load_all()
+    df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim = utils.load_all()
 
 #    df_tas = df_tas.iloc[:400,:]
 #    df_ss = df_ss.iloc[:750,:]
@@ -152,7 +153,7 @@ def main():
 #    df_tas['error'] = df_tas['content'].apply(lambda x: np.sqrt(x))
 #    df_ss['error'] = df_ss['content'].apply(lambda x: np.sqrt(x))
 #    df_mult['error'] = df_mult['content'].apply(lambda x: np.sqrt(x))
-    popt_all = minimize(total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, 'all'), bounds=bounds, constraints=con1)
+    popt_all = minimize(utils.total_minimize, test, args=(df_tas, df_tas_sim, df_ss, df_ss_sim, df_mult, df_mult_sim, df_ss_m1, df_ss_m1_sim, 'all'), bounds=bounds, constraints=con1)
     data_coef=popt_all.x.reshape((1,df_ss_sim.shape[1]))
 #    data_coef=np.append(popt_all.x, popt_all.fun).reshape(1,df_ss_sim.shape[1]+1)
 #    data_coef=np.array([data_coef[-1][-1]])
@@ -186,9 +187,9 @@ def main():
     df_sims['ss_chi2'] = sim_ss_chi
     df_sims['mult_chi2'] = sim_mult_chi
     df_sims['ss_m1_chi2'] = sim_ss_m1_chi
-    ss_chi = chisq(popt_all.x, df_ss_sim, df_ss)
-    ss_m1_chi = chisq(popt_all.x, df_ss_m1_sim, df_ss_m1)
-    mult_chi = chisq(popt_all.x, df_mult_sim, df_mult)
+    ss_chi = utils.chisq(popt_all.x, df_ss_sim, df_ss)
+    ss_m1_chi = utils.chisq(popt_all.x, df_ss_m1_sim, df_ss_m1)
+    mult_chi = utils.chisq(popt_all.x, df_mult_sim, df_mult)
     data_coef = np.append(data_coef, [df_tas.at[int(170/25),'content']])
     data_coef = np.append(data_coef, [df_tas.at[int(1000/25),'content']])
     print(data_coef)
